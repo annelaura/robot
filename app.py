@@ -3,7 +3,7 @@ from datetime import datetime
 import json
 import os
 
-settings_file = '/home/pi/door_control_settings.json'
+settings_file = '/home/annelaura/FH/robot/door_control_settings.json'
 
 def load_settings():
     if os.path.exists(settings_file):

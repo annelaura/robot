@@ -11,7 +11,7 @@ latitude = 55.4199
 longitude = 11.5428
 timezone = 'Europe/Copenhagen'
 timezone_obj = pytz.timezone(timezone)
-settings_file = '/home/pi/door_control_settings.json'
+settings_file = '/home/annelaura/FH/robot/door_control_settings.json'
 
 # Define GPIO pins for each door
 DOOR_CHANNELS = {
