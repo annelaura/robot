@@ -1,4 +1,3 @@
-import RPi.GPIO as GPIO
 import time
 from datetime import datetime, timedelta
 import pytz
@@ -11,9 +10,10 @@ latitude = 55.4199
 longitude = 11.5428
 timezone = 'Europe/Copenhagen'
 timezone_obj = pytz.timezone(timezone)
-settings_file = '/home/annelaura/FH/robot/door_control_settings.json'
+settings_file = '/Users/tzx804/projects/privat/FH/pi/robot/door_control_settings.json'
+status_file = '/Users/tzx804/projects/privat/FH/pi/robot/door_control_status.json'
 
-# Define GPIO pins for each door
+# Define GPIO pins for each door (for simulation purposes)
 DOOR_CHANNELS = {
     "door1_open": 2,
     "door1_close": 3,
@@ -23,112 +23,134 @@ DOOR_CHANNELS = {
     "nest_close": 7,
 }
 
-# Setup GPIO
-GPIO.setmode(GPIO.BCM)
-for channel in DOOR_CHANNELS.values():
-    GPIO.setup(channel, GPIO.OUT)
-    GPIO.output(channel, GPIO.LOW)
+# Simulate GPIO setup
+def setup_gpio():
+    print("GPIO setup simulated.")
+    for channel in DOOR_CHANNELS.values():
+        print(f"Setting up GPIO pin {channel} as OUTPUT.")
+
+# Simulate GPIO output
+def gpio_output(channel, state):
+    print(f"Setting GPIO pin {channel} to {'HIGH' if state else 'LOW'}.")
 
 def load_settings():
     if os.path.exists(settings_file):
         with open(settings_file, 'r') as file:
             settings = json.load(file)
+            print("Settings file loaded.")
     else:
-        settings = default_settings
-        save_settings(settings)
+        settings = {}  # Provide default settings if needed
+        print("Settings file not found.")
     return settings
 
 def save_settings(settings):
     with open(settings_file, 'w') as file:
         json.dump(settings, file, indent=4)
+        print("Settings file updated.")
 
-def calculate_sunset_dusk(date, latitude, longitude, timezone):
+def load_status():
+    if os.path.exists(status_file):
+        with open(status_file, 'r') as file:
+            status = json.load(file)
+            print("Status file loaded.")
+    else:
+        status = {}
+        print("Status file not found.")
+    return status
+
+def write_status_to_file(door_states, next_actions, sunrise, dawn):
+    status = {
+        'door_states': door_states,
+        'next_actions': next_actions,
+        'sunrise': sunrise.strftime('%Y-%m-%d %H:%M:%S'),
+        'dawn': dawn.strftime('%Y-%m-%d %H:%M:%S')
+    }
+    with open(status_file, 'w') as file:
+        json.dump(status, file, indent=4, default=str)  # Convert datetime to string
+        print("Status file updated.")
+
+def calculate_sunrise_dawn(date, latitude, longitude, timezone):
     observer = ephem.Observer()
     observer.lat = str(latitude)
     observer.lon = str(longitude)
     observer.date = date
 
-    sunset_time = observer.next_setting(ephem.Sun()).datetime().replace(tzinfo=pytz.UTC).astimezone(timezone)
-    dusk_time = observer.next_transit(ephem.Sun(), start=sunset_time).datetime().replace(tzinfo=pytz.UTC).astimezone(timezone)
+    sunrise_time = observer.next_rising(ephem.Sun()).datetime().replace(tzinfo=pytz.UTC).astimezone(timezone)
+    dawn_time = observer.next_rising(ephem.Sun(), start=sunrise_time).datetime().replace(tzinfo=pytz.UTC).astimezone(timezone)
 
-    return sunset_time, dusk_time
+    print(f"Sunrise: {sunrise_time}")
+    print(f"Dawn: {dawn_time}")
+    
+    return sunrise_time, dawn_time
 
-def get_sunset_dusk_times():
+def get_sunrise_dawn_times():
     now = datetime.now(timezone_obj)
-    sunset, dusk = calculate_sunset_dusk(now, latitude, longitude, timezone_obj)
-    return sunset, dusk
+    sunrise, dawn = calculate_sunrise_dawn(now, latitude, longitude, timezone_obj)
+    return sunrise, dawn
 
 def get_next_actions():
     settings = load_settings()
     now = datetime.now(timezone_obj)
-    sunset, dusk = get_sunset_dusk_times()
+    sunrise, dawn = get_sunrise_dawn_times()
 
     next_actions = {}
-    for door in settings['door_open_times']:
-        if settings['door_open_times'][door]['type'] == 'specific':
-            open_time = datetime.strptime(settings['door_open_times'][door]['time'], '%H:%M').time()
-        else:  # 'sunset'
-            open_time = (sunset - timedelta(minutes=settings['door_open_times'][door]['offset'])).time()
+    for door in settings.get('door_open_times', {}):
+        open_time = datetime.strptime(settings['door_open_times'][door]['time'], '%H:%M').time()
+        if settings['door_open_times'][door]['type'] == 'sunrise':
+            open_time = (sunrise - timedelta(minutes=settings['sunrise_offset'])).time()
+            print(f"Adjusted open time for {door} to {open_time}.")
 
-        if settings['door_close_times'][door]['type'] == 'specific':
-            close_time = datetime.strptime(settings['door_close_times'][door]['time'], '%H:%M').time()
-        else:  # 'dusk'
-            close_time = (dusk + timedelta(minutes=settings['door_close_times'][door]['offset'])).time()
+        close_time = datetime.strptime(settings['door_close_times'][door]['time'], '%H:%M').time()
+        print(f"Adjusted close time for {door} to {close_time}.")
 
+        if settings['door_close_times'][door]['type'] == 'dawn':
+            close_time = (dawn + timedelta(minutes=settings['dawn_offset'])).time()
+            print(f"Adjusted close time for {door} to {close_time}.")
+        
         next_actions[door] = {
             'open': open_time,
             'close': close_time
         }
 
-    return {
-        'current_time': now.strftime('%Y-%m-%d %H:%M:%S'),
-        'sunset': sunset.strftime('%Y-%m-%d %H:%M:%S'),
-        'dusk': dusk.strftime('%Y-%m-%d %H:%M:%S'),
-        'next_actions': next_actions,
-        'door_states': door_states
-    }
+    door_states = {door: "Unknown" for door in DOOR_CHANNELS.keys() if "open" in door or "close" in door}
+    print(f"Next actions: {next_actions}")
+    write_status_to_file(door_states, next_actions, sunrise, dawn)
+    print("Status file updated.")
 
 def control_doors():
     settings = load_settings()
     while True:
         now = datetime.now(timezone_obj)
-        sunset, dusk = get_sunset_dusk_times()
-        dawn = (sunset - timedelta(minutes=settings['dawn_offset']))
+        sunrise, dawn = get_sunrise_dawn_times()
 
         # Perform door control based on settings
-        for door in settings['door_open_times']:
-            if settings['door_open_times'][door]['type'] == 'specific':
-                open_time = datetime.strptime(settings['door_open_times'][door]['time'], '%H:%M').time()
-                if now.time() == open_time:
-                    open_door(door, settings['door_open_times'][door]['duration'])
-            else:  # 'sunset'
-                open_time = (sunset - timedelta(minutes=settings['door_open_times'][door]['offset'])).time()
-                if now.time() == open_time:
-                    open_door(door, settings['door_open_times'][door]['duration'])
+        for door in settings.get('door_open_times', {}):
+            open_time = datetime.strptime(settings['door_open_times'][door]['time'], '%H:%M').time()
+            if settings['door_open_times'][door]['type'] == 'sunrise':
+                open_time = (sunrise - timedelta(minutes=settings['sunrise_offset'])).time()
+            if now.time() == open_time:
+                open_door(door, settings['door_open_times'][door]['duration'])
 
-        for door in settings['door_close_times']:
-            if settings['door_close_times'][door]['type'] == 'specific':
-                close_time = datetime.strptime(settings['door_close_times'][door]['time'], '%H:%M').time()
-                if now.time() == close_time:
-                    close_door(door, settings['door_close_times'][door]['duration'])
-            else:  # 'dusk'
-                close_time = (dusk + timedelta(minutes=settings['door_close_times'][door]['offset'])).time()
-                if now.time() == close_time:
-                    close_door(door, settings['door_close_times'][door]['duration'])
-
+        for door in settings.get('door_close_times', {}):
+            close_time = datetime.strptime(settings['door_close_times'][door]['time'], '%H:%M').time()
+            if settings['door_close_times'][door]['type'] == 'dawn':
+                close_time = (dawn + timedelta(minutes=settings['dawn_offset'])).time()
+            if now.time() == close_time:
+                close_door(door, settings['door_close_times'][door]['duration'])
+        print(f"Current time: {now}")
         time.sleep(60)  # Check every minute
 
 def open_door(door, duration):
     print(f"Opening {door} for {duration} seconds.")
-    GPIO.output(DOOR_CHANNELS[f"{door}_open"], GPIO.HIGH)
+    gpio_output(DOOR_CHANNELS[f"{door}_open"], True)
     time.sleep(duration)
-    GPIO.output(DOOR_CHANNELS[f"{door}_open"], GPIO.LOW)
+    gpio_output(DOOR_CHANNELS[f"{door}_open"], False)
 
 def close_door(door, duration):
     print(f"Closing {door} for {duration} seconds.")
-    GPIO.output(DOOR_CHANNELS[f"{door}_close"], GPIO.HIGH)
+    gpio_output(DOOR_CHANNELS[f"{door}_close"], True)
     time.sleep(duration)
-    GPIO.output(DOOR_CHANNELS[f"{door}_close"], GPIO.LOW)
+    gpio_output(DOOR_CHANNELS[f"{door}_close"], False)
 
 if __name__ == "__main__":
     try:
@@ -136,4 +158,5 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("Program interrupted and stopped.")
     finally:
-        GPIO.cleanup()
+        # Ensure GPIO cleanup if using actual hardware
+        pass
