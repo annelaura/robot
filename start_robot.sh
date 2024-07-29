@@ -1,11 +1,13 @@
 #!/bin/bash
 
-# Activate the virtual environment
-source /home/annelaura/FH/robot/robot/bin/activate
+cd /home/annelaura/FH/robot/
 
-# Start the door control script in the background
-python /home/annelaura/FH/robot/door_control.py 50 50 50 50 50 50 0 30 55.4299 11.5428 &
+# Activate the virtual environment
+source robot/bin/activate
+
+# Start the door control script in the background and write the output to a log file
+nohup python3 my_control.py > motor_door.log 2>&1 &
 
 # Start the Streamlit app
-streamlit run /home/annelaura/FH/robot/app.py
+streamlit run myapp.py
 

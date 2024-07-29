@@ -139,6 +139,22 @@ def control_doors():
             door_actions['close_times'][door] = close_time
         # Perform door control based on actions
         for door in status.get('door_states', {}):
+            # Check if remote control has been pressed
+            if door_states[door] == "remote_open":
+                remote_time = settings['remote_time']
+                open_door(door, settings['door_open_times'][door]['duration'])
+                print(f"Remote time = {remote_time}")
+                print(f"Remote opening {door} for {remote_time} minutes before returning to schedule")
+                time.sleep(remote_time*60) # opens for 15 minutes
+                door_states[door] = "unknown"
+            elif door_states[door] == "remote_close":
+                remote_time = settings['remote_time']
+                close_door(door, settings['door_close_times'][door]['duration']) 
+                print(f"Remote time = {remote_time}")
+                print(f"Remote closing {door} for {remote_time} minutes before returning to schedule.")
+                time.sleep(remote_time*60)
+                door_states[door] = "unknown"
+            # Control doors according to time and schedule
             if now.time()>door_actions['open_times'][door] and now.time()<door_actions['close_times'][door]:
                 # door should be open
                 if door_states[door] in ("closed", "unknown"):
