@@ -1,0 +1,21 @@
+{
+    "door_states": {
+        "door1": "unknown",
+        "door2": "unknown",
+        "nest": "unknown"
+    },
+    "next_sunrise": "",
+    "next_civil_dusk": "",
+    "door_actions": {
+        "open_times": {
+            "door1":"unknown",
+            "door2":"unknown",
+            "nest":"unknown"
+        },
+        "close_times":{
+            "door1":"unknown",
+            "door2":"unknown",
+            "nest":"unknown"
+        }
+    }
+}

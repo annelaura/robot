@@ -1,0 +1,21 @@
+{
+    "door_states": {
+        "door1": "open",
+        "door2": "open",
+        "nest": "open"
+    },
+    "next_sunrise": "30-07-2024 05:17:18",
+    "next_sunset": "29-07-2024 21:23:52",
+    "door_actions": {
+        "open_times": {
+            "door1": "05:17:00",
+            "door2": "05:17:00",
+            "nest": "02:00:00"
+        },
+        "close_times": {
+            "door1": "21:53:00",
+            "door2": "21:53:00",
+            "nest": "16:00:00"
+        }
+    }
+}
