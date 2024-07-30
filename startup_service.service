@@ -1,0 +1,22 @@
+# chmod +x /home/annelaura/FH/robot/start_robot.sh
+# sudo vim /etc/systemd/system/startup_service.service
+[Unit]
+Description=Run my startup script
+After=network.target
+
+[Service]
+ExecStart=/home/annelaura/FH/robot/start_robot.sh
+WorkingDirectory=/home/annelaura/FH/robot/
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+User=annelaura
+
+[Install]
+WantedBy=multi-user.target
+#sudo systemctl daemon-reload
+#sudo systemctl enable startup_script.service
+#sudo systemctl start startup_script.service
+#sudo systemctl status startup_script.service
+
+# remember to change the twilio credentials

@@ -16,11 +16,11 @@ now = datetime.now(timezone_obj)
 today_midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
 # Status
-settings_file = '/Users/tzx804/projects/privat/FH/pi/robot/door_control_settings.json'
-status_file = '/Users/tzx804/projects/privat/FH/pi/robot/door_control_status.json'
+settings_file = '/home/annelaura/FH/robot/door_control_settings.json'
+status_file = '/home/annelaura/FH/robot/door_control_status.json'
 status = load_status()
 settings = load_settings()
-log_file = '/Users/tzx804/projects/privat/FH/pi/robot/motor_door.log'
+log_file = '/home/annelaura/FH/robot/motor_door.log'
 
 def display_warning_banner():
     remote_in_use = 0
@@ -147,12 +147,7 @@ with tab3:
 time.sleep(60)
 st.rerun()
 
-
-
 # TODO:
-
-# add output from the background process to the app (maybe save the output to a file and display it in the app): add "nohup python3 motor_door.py > motor_door.log 2>&1 &" to .sh file
-# remember to add a clean status file upon pi restart
-
-# get "fast ip" with TDC - ask for 2 sim? and move privete phones to TDC
-# order pi stuff
+# when we have permanent ip:
+# set it up on the router, change the pi to run a flask server and the app to run on streamlit cloud
+## set the pi to send a "heartbeat" every minute to the cloud and set twilio to send a text when the pi stops sending heartbeats

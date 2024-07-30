@@ -1,8 +1,0 @@
-RPi.GPIO
-astral
-streamlit
-pytz 
-ephem
-time 
-twilio
-socket
