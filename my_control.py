@@ -1,18 +1,20 @@
-import time
+from robot_functions import *
+import ephem
+import pandas as pd
 from datetime import datetime, timedelta
 import pytz
-import ephem
-import json
 import os
-from robot_functions import *
+import json
+import time
+import RPi.GPIO as GPIO
 
 # Configuration
 latitude = 55.4199
 longitude = 11.5428
 timezone = 'Europe/Copenhagen'
 timezone_obj = pytz.timezone(timezone)
-settings_file = '/Users/tzx804/projects/privat/FH/pi/robot/door_control_settings.json'
-status_file = '/Users/tzx804/projects/privat/FH/pi/robot/door_control_status.json'
+settings_file = '/home/annelaura/FH/robot/door_control_settings.json'
+status_file = '/home/annelaura/FH/robot/door_control_status.json'
 
 # Define GPIO pins for each door (for simulation purposes)
 DOOR_CHANNELS = {
@@ -30,5 +32,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("Program interrupted and stopped.")
     finally:
-        # Ensure GPIO cleanup if using actual hardware
-        pass
+        GPIO.cleanup()

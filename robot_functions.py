@@ -5,24 +5,24 @@ import pytz
 import os
 import json
 import time
-
+import RPi.GPIO as GPIO
 
 # Configuration
 latitude = 55.4199
 longitude = 11.5428
 timezone = 'Europe/Copenhagen'
 timezone_obj = pytz.timezone(timezone)
-settings_file = '/Users/tzx804/projects/privat/FH/pi/robot/door_control_settings.json'
-status_file = '/Users/tzx804/projects/privat/FH/pi/robot/door_control_status.json'
+settings_file = '/home/annelaura/FH/robot/door_control_settings.json'
+status_file = '/home/annelaura/FH/robot/door_control_status.json'
 
-# Define GPIO pins for each door (for simulation purposes)
+# Define GPIO pins for each door
 DOOR_CHANNELS = {
-    "door1_open": 2,
-    "door1_close": 3,
-    "door2_open": 4,
-    "door2_close": 5,
-    "nest_open": 6,
-    "nest_close": 7,
+    "door1_open": 17,  # GPIO17
+    "door1_close": 27,  # GPIO27
+    "door2_open": 22,  # GPIO22
+    "door2_close": 10,  # GPIO10
+    "nest_open": 9,    # GPIO9
+    "nest_close": 11,  # GPIO11
 }
 
 def create_observer(lat, lon, timezone):
@@ -191,16 +191,18 @@ def close_door(door, duration):
     gpio_output(DOOR_CHANNELS[f"{door}_close"], False)
     # OBS add "closed" door_state to status file
 
-
-# Simulate GPIO setup
+# GPIO setup
 def setup_gpio():
-    print("GPIO setup simulated.")
+    print("Setting up GPIO pins.")
+    GPIO.setmode(GPIO.BCM)
     for channel in DOOR_CHANNELS.values():
+        GPIO.setup(channel, GPIO.OUT)
         print(f"Setting up GPIO pin {channel} as OUTPUT.")
 
-# Simulate GPIO output
+# GPIO output
 def gpio_output(channel, state):
     print(f"Setting GPIO pin {channel} to {'HIGH' if state else 'LOW'}.")
+    GPIO.output(channel, GPIO.HIGH if state else GPIO.LOW)
 
 def load_settings():
     if os.path.exists(settings_file):
