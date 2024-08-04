@@ -1,0 +1,14 @@
+[Unit]
+Description=Send ip service
+After=network.target
+
+[Service]
+ExecStart=/home/annelaura/FH/robot/send_ip.sh
+WorkingDirectory=/home/annelaura/FH/robot/
+User=annelaura
+Type=oneshot
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+

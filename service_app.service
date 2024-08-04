@@ -1,0 +1,13 @@
+[Unit]
+Description=Start app service
+After=network.target
+
+[Service]
+ExecStart=/home/annelaura/FH/robot/start_app.sh
+WorkingDirectory=/home/annelaura/FH/robot/
+User=annelaura
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
