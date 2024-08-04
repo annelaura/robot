@@ -4,8 +4,8 @@
         "door2": "unknown",
         "nest": "unknown"
     },
-    "next_sunrise": "",
-    "next_civil_dusk": "",
+    "next_sunrise": "unknown nan",
+    "next_sunset": "unknown nan",
     "door_actions": {
         "open_times": {
             "door1":"unknown",

@@ -5,7 +5,7 @@ from collections import deque
 from robot_functions import *
 
 # Create tabs
-tab1, tab2, tab3 = st.tabs(["Status", "Update Settings", "Remote Control"])
+tab1, tab2, tab3, tab4 = st.tabs(["Status", "Update Settings", "Remote Control", "Live streaming"])
 
 #Configuration
 latitude = 55.4199
@@ -63,15 +63,15 @@ with tab1:
     def read_last_lines(file_path, num_lines):
         with open(file_path, 'r') as file:
             lines = deque(file, num_lines)
-        return ''.join(lines)
+        return ''.join(reversed(lines))
 
     log_placeholder = st.empty()
 
-    def display_log_content():
-        log_content = read_last_lines(log_file, 20)
+    def display_log_content(file_path):
+        log_content = read_last_lines(file_path, 20)
         log_placeholder.code(log_content, language='bash')
 
-    display_log_content()
+    display_log_content(log_file)
 
 with tab2:
     st.header("Update Settings")
@@ -143,8 +143,12 @@ with tab3:
             if st.button(f"Close {door.capitalize()}", key=f'close_{door}'):
                 control_door(door, "remote_close")
 
+with tab4:
+    st.header("Live streaming from chicken coop")
+
+
 # Auto-refresh the page every minute
-time.sleep(60)
+time.sleep(30)
 st.rerun()
 
 # TODO:

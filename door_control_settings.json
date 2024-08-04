@@ -3,37 +3,37 @@
         "door1": {
             "type": "daily",
             "time": "05:00",
-            "duration": 7
+            "duration": 60
         },
         "door2": {
             "type": "daily",
             "time": "05:00",
-            "duration": 5
+            "duration": 45
         },
         "nest": {
             "type": "specific",
             "time": "02:00",
-            "duration": 5
+            "duration": 30
         }
     },
     "door_close_times": {
         "door1": {
             "type": "daily",
             "time": "22:35",
-            "duration": 5
+            "duration": 60
         },
         "door2": {
             "type": "daily",
             "time": "22:35",
-            "duration": 5
+            "duration": 45
         },
         "nest": {
             "type": "specific",
             "time": "16:00",
-            "duration": 5
+            "duration": 30
         }
     },
-    "sunset_offset": 30,
+    "sunset_offset": 60,
     "sunrise_offset": 0,
     "door_states": {
         "door1": "unknown",
