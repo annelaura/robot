@@ -2,13 +2,13 @@
     "door_open_times": {
         "door1": {
             "type": "daily",
-            "time": "05:00",
-            "duration": 60
+            "time": "06:00",
+            "duration": 100
         },
         "door2": {
             "type": "daily",
-            "time": "05:00",
-            "duration": 45
+            "time": "06:00",
+            "duration": 130
         },
         "nest": {
             "type": "specific",
@@ -19,22 +19,22 @@
     "door_close_times": {
         "door1": {
             "type": "daily",
-            "time": "22:35",
-            "duration": 60
+            "time": "16:00",
+            "duration": 100
         },
         "door2": {
             "type": "daily",
-            "time": "22:35",
-            "duration": 45
+            "time": "16:00",
+            "duration": 120
         },
         "nest": {
             "type": "specific",
-            "time": "16:00",
+            "time": "17:00",
             "duration": 30
         }
     },
     "sunset_offset": 60,
-    "sunrise_offset": 0,
+    "sunrise_offset": 1,
     "door_states": {
         "door1": "unknown",
         "door2": "unknown",

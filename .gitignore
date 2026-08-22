@@ -1,0 +1,19 @@
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Editor temporary files
+*.swp
+*.swo
+
+# Local virtual environment
+robot/
+.venv/
+venv/
+
+# Runtime status and logs
+door_control_status.json
+*.log
+*.log.*
+motor_log.txt
+motor_log.txt.*

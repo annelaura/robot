@@ -33,45 +33,65 @@ def display_warning_banner():
     if remote_in_use > 0:
         st.warning(f"Remote control is in use. Please note that changes in settings will not be effectuated before the {remote_time} minutes remote window has passed.")
             
-with tab1:
+@st.fragment(run_every="1s")
+def display_live_status():
+    live_status = load_status()
+    live_settings = load_settings()
+    live_now = datetime.now(timezone_obj)
+
+    # Remote control warning
+    remote_in_use = 0
+    remote_time = live_settings['remote_time']
+    door_states = live_status.get('door_states', {})
+
+    for door in door_states:
+        if door_states[door] in ["remote_close", "remote_open"]:
+            remote_in_use += 1
+
+    if remote_in_use > 0:
+        st.warning(
+            f"Remote control is in use. Please note that changes in settings "
+            f"will not be effectuated before the {remote_time} minutes remote "
+            f"window has passed."
+        )
+
     st.header("Current Date and Time")
-    # display warning banner if remote is beeing used:
-    display_warning_banner()  # Display the banner if needed
-    st.write(f"**Current Time**: {now.strftime('%d-%m-%Y %H:%M')}")
+    st.write(f"**Current Time**: {live_now.strftime('%d-%m-%Y %H:%M:%S')}")
 
     st.header("Today's Sun")
-    st.write("Lattiude: {} and Longitude: {}".format(latitude, longitude))
-    next_sunrise = status.get('next_sunrise', {})
-    next_sunset = status.get('next_sunset', {})
+    st.write("Latitude: {} and Longitude: {}".format(latitude, longitude))
+
+    next_sunrise = live_status.get('next_sunrise', {})
+    next_sunset = live_status.get('next_sunset', {})
+
     st.write("**Sunrise**: {}".format(next_sunrise.split(' ')[1][:5]))
     st.write("**Sunset**: {}".format(next_sunset.split(' ')[1][:5]))
 
-
     st.header("Door status")
-    door_states = status.get('door_states', {})
     for door in door_states:
         st.write(f"**{door.capitalize()}**: {door_states[door]}")
 
     st.header("Door actions")
-    door_actions = status.get('door_actions', {})
+    door_actions = live_status.get('door_actions', {})
+
     for action in door_actions:
-        st.write(f"**{action.capitalize()}**:") 
-        bullet_points = "\n".join([f"- {key}: {value}" for key, value in door_actions[action].items()])
+        st.write(f"**{action.capitalize()}**:")
+        bullet_points = "\n".join(
+            [f"- {key}: {value}" for key, value in door_actions[action].items()]
+        )
         st.write(bullet_points)
 
-    st.header('Motor Door Program Log')
-    def read_last_lines(file_path, num_lines):
-        with open(file_path, 'r') as file:
-            lines = deque(file, num_lines)
-        return ''.join(reversed(lines))
+    st.header("Motor Door Program Log")
 
-    log_placeholder = st.empty()
+    with open(log_file, 'r') as file:
+        lines = deque(file, 20)
 
-    def display_log_content(file_path):
-        log_content = read_last_lines(file_path, 20)
-        log_placeholder.code(log_content, language='bash')
+    log_content = ''.join(reversed(lines))
+    st.code(log_content, language='bash')
 
-    display_log_content(log_file)
+
+with tab1:
+    display_live_status()
 
 with tab2:
     st.header("Update Settings")
@@ -147,11 +167,5 @@ with tab4:
     st.header("Live streaming from chicken coop")
 
 
-# Auto-refresh the page every minute
-time.sleep(30)
-st.rerun()
-
 # TODO:
-# when we have permanent ip:
-# set it up on the router, change the pi to run a flask server and the app to run on streamlit cloud
 ## set the pi to send a "heartbeat" every minute to the cloud and set twilio to send a text when the pi stops sending heartbeats
