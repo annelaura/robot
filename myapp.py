@@ -9,7 +9,11 @@ from datetime import datetime
 import pytz
 import streamlit as st
 
-from config import remote_control_file, motor_operation_file
+from config import (
+    REMOTE_MODE_DURATION_SECONDS,
+    motor_operation_file,
+    remote_control_file,
+)
 from robot_functions import *
 
 
@@ -64,7 +68,8 @@ def save_remote_control(
     door=None,
     action=None,
     duration=0,
-    issued_at=0.0
+    issued_at=0.0,
+    expires_at=0.0
 ):
     control = {
         'mode': mode,
@@ -72,7 +77,8 @@ def save_remote_control(
         'door': door,
         'action': action,
         'duration': duration,
-        'issued_at': issued_at
+        'issued_at': issued_at,
+        'expires_at': expires_at
     }
 
     temporary_file = (
@@ -90,9 +96,25 @@ def save_remote_control(
 
 
 def load_remote_mode():
-    return load_remote_control().get(
-        'mode',
-        'automatic'
+    control = load_remote_control()
+
+    if remote_mode_is_active(control):
+        return 'remote'
+
+    if control.get('mode') == 'remote':
+        save_remote_control('automatic')
+
+    return 'automatic'
+
+
+def remote_mode_is_active(control):
+    expires_at = control.get('expires_at', 0.0)
+
+    return (
+        control.get('mode') == 'remote'
+        and isinstance(expires_at, (int, float))
+        and not isinstance(expires_at, bool)
+        and time.time() < expires_at
     )
 
 def change_remote_mode():
@@ -104,7 +126,12 @@ def change_remote_mode():
     save_remote_control(
         'remote'
         if remote_enabled
-        else 'automatic'
+        else 'automatic',
+        expires_at=(
+            time.time() + REMOTE_MODE_DURATION_SECONDS
+            if remote_enabled
+            else 0.0
+        )
     )
 
 
@@ -115,25 +142,39 @@ def send_remote_command(door, action, duration):
     if not 1 <= duration <= 60:
         return
 
+    control = load_remote_control()
+    if not remote_mode_is_active(control):
+        save_remote_control('automatic')
+        return
+
     save_remote_control(
         mode='remote',
         command_id=uuid.uuid4().hex,
         door=door,
         action=action,
         duration=duration,
-        issued_at=time.time()
+        issued_at=time.time(),
+        expires_at=control['expires_at']
     )
 
 
 def stop_remote_motor():
-    save_remote_control(mode='remote')
+    control = load_remote_control()
+
+    if remote_mode_is_active(control):
+        save_remote_control(
+            mode='remote',
+            expires_at=control['expires_at']
+        )
+    else:
+        save_remote_control(mode='automatic')
 
 
 def get_app_lock_state():
     remote = load_remote_control()
     operation = load_motor_operation()
 
-    if remote.get('mode') == 'remote':
+    if remote_mode_is_active(remote):
         return 'remote', operation
 
     if operation.get('active'):
