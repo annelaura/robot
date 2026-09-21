@@ -124,6 +124,10 @@ def control_doors():
             remote_control = load_remote_control()
 
             if remote_control['mode'] == 'remote':
+                if remote_mode_expired(remote_control):
+                    switch_to_automatic_mode()
+                    continue
+
                 run_remote_control(remote_control)
                 time.sleep(REMOTE_POLL_SECONDS)
                 continue
@@ -197,7 +201,8 @@ def load_remote_control():
         'door': None,
         'action': None,
         'duration': 0,
-        'issued_at': 0.0
+        'issued_at': 0.0,
+        'expires_at': 0.0
     }
 
     try:
@@ -210,6 +215,45 @@ def load_remote_control():
         return default
 
     return {**default, **control}
+
+
+def remote_mode_expired(control):
+    expires_at = control.get('expires_at', 0.0)
+
+    return not (
+        isinstance(expires_at, (int, float))
+        and not isinstance(expires_at, bool)
+        and time.time() < expires_at
+    )
+
+
+def switch_to_automatic_mode():
+    control = {
+        'mode': 'automatic',
+        'command_id': None,
+        'door': None,
+        'action': None,
+        'duration': 0,
+        'issued_at': 0.0,
+        'expires_at': 0.0
+    }
+    temporary_file = (
+        f"{remote_control_file}."
+        f"{os.getpid()}.tmp"
+    )
+
+    with open(temporary_file, 'w') as file:
+        json.dump(control, file, indent=4)
+        file.flush()
+        os.fsync(file.fileno())
+
+    os.replace(temporary_file, remote_control_file)
+    stop_all_motors()
+    update_remote_log(None)
+    logging.info(
+        "Remote control expired after one hour; "
+        "returning to automatic schedule."
+    )
 
 def update_remote_log(command):
     global _active_remote_command
@@ -293,6 +337,7 @@ def run_remote_control(control):
             command_still_active = (
                 current_control.get('mode') == 'remote'
                 and current_control.get('command_id') == command_id
+                and not remote_mode_expired(current_control)
             )
 
             if not command_still_active:
@@ -455,7 +500,11 @@ def run_scheduled_motor(door, action, duration):
                 )
                 last_seconds = remaining
 
-            if load_remote_control()['mode'] == 'remote':
+            current_control = load_remote_control()
+            if (
+                current_control['mode'] == 'remote'
+                and not remote_mode_expired(current_control)
+            ):
                 logging.info(
                     "Scheduled movement interrupted "
                     "by remote mode."
@@ -521,5 +570,4 @@ def write_status_to_file(door_states, next_sunrise, next_sunset, door_actions):
     }
     with open(status_file, 'w') as file:
         json.dump(status, file, indent=4, default=str)  # Convert datetime to string
-
 
