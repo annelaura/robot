@@ -26,4 +26,8 @@ DOOR_CHANNELS = {
 # Define file paths for settings and status
 settings_file = '/home/annelaura/FH/robot/door_control_settings.json'
 status_file = '/home/annelaura/FH/robot/door_control_status.json'
+remote_control_file = '/home/annelaura/FH/robot/remote_control.json'
+motor_operation_file = '/home/annelaura/FH/robot/motor_operation.json'
 
+# Stop remote motor if browser heartbeats disappear.
+REMOTE_POLL_SECONDS = 0.05
