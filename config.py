@@ -31,3 +31,4 @@ motor_operation_file = '/home/annelaura/FH/robot/motor_operation.json'
 
 # Stop remote motor if browser heartbeats disappear.
 REMOTE_POLL_SECONDS = 0.05
+REMOTE_MODE_DURATION_SECONDS = 60 * 60
